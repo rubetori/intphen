@@ -1,0 +1,85 @@
+# Example to use the functions in 'intphen_lib.R'
+
+
+source('intphen_lib.R')
+
+
+
+# Data: 'Norena.txt'  from Torices & Méndez (2014)
+# This data set represents the dry mass (in grames) of inflorescence components of the sunflower species Tussilago farfara
+# The inflorescences were dissected in 'SCAPE', 'RECEPTACLE', 'MALEFL' (male flowers), 'OVAR' (reproductive part of female flowers), 
+# and 'RAYS' (the petaloid ray of female flower). Furthermore in the last column the total weight of the inflorescence is added 'TOTALSIZE'
+
+traits<-read.table ("Norena.txt", sep="\t", header=T)
+
+
+# To estimate 'classic' phenotypic integration indices based on the variance of the eigenvalues:
+intphen (traits[,1:5]) # the last column is not included since represents the total size
+
+# [1] "INT (Phenotypic integration index) =   1.06"
+# [1] "RelINT (% of maximum possible integration) =  26.489"
+# [1] "INT.c (Corrected phenotypic integration index) =  0.922"
+# [1] "RelINT.c (% of maximum possible integration) =  23.04"
+# [1] "Number of observations used =  29"
+
+# NOTE that the number of observations used by the function was 29 instead 40 that were included in the 'Norena' data set. 
+# Missing (NAs) values were removed. 
+
+
+# To assess the statistical significance of these indices: Is INT significantly different from 0?
+intphen.boot(traits[,1:5], 5000)
+
+# [1] "Mean =  1.062"
+# [1] "Median = 1.038"
+# [1] "SD =  0.321"
+# [1] "SE =  0.06"
+# [1] "Lower IC 99% =  0.419"
+# [1] "Higher IC 99% =  1.993"
+# [1] "Lower IC 95% =  0.526"
+# [1] "Higher IC 95% =  1.743"
+# [1] "Number of replicates =  5000"
+
+# Yes, it is!!!
+
+
+
+# To estimate the partial correlation matrix of a set of traits
+library(ppcor)
+cor.par(traits[,1:5], traits[,6], trait.names=TRUE)  # it does not work. Something is wrong. We have missing values!!!
+
+traits<-na.exclude(traits) 
+cor.par(traits[,1:5], traits[,6], trait.names=TRUE) # Not it works
+
+#                SCAPE RECEPTACLE      MALEFL        OVAR       RAYS
+#SCAPE       1.0000000 -0.6947211 -0.45135198 -0.86249776 -0.8550486
+#RECEPTACLE -0.6947211  1.0000000  0.44233604  0.46862985  0.4475203
+#MALEFL     -0.4513520  0.4423360  1.00000000  0.06714336  0.2032393
+#OVAR       -0.8624978  0.4686298  0.06714336  1.00000000  0.6795067
+#RAYS       -0.8550486  0.4475203  0.20323933  0.67950668  1.0000000
+
+
+
+# To estimate the INT indices controlling by a third variable:
+intphen.par(traits)
+
+#[1] "INTpc (Phenotypic integration index of partial correlations) =   1.642"
+#[1] "RelINTpc (% of maximum possible integration of partial correlations) =  41.056"
+#[1] "INTpc.c (Corrected phenotypic integration index of partial correlations) =  1.504"
+#[1] "RelINTpc.c (% of maximum possible integration of partial correlations) =  37.607"
+#[1] "Number of observations used =  29"
+
+# Interesting! The INTpc is even higher than INT. But... is it still statistically significant??
+
+intphen.boot.par(traits, 5000)
+
+#[1] "Mean =  1.549"
+#[1] "Median = 1.523"
+#[1] "SD =  0.395"
+#[1] "SE =  0.073"
+#[1] "Lower IC 99% =  0.654"
+#[1] "Higher IC 99% =  2.688"
+#[1] "Lower IC 95% =  0.843"
+#[1] "Higher IC 95% =  2.377"
+#[1] "Number of replicates =  5000"
+
+# Yes, it is significantly different from 0.
